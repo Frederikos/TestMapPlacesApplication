@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">TestMapApplication</string>
+    <string name="title_activity_main">Map</string>
+    <string name="loading">Loading...</string>
+    <string name="places_list">List Places</string>
+    <string name="votes">votes</string>
+
+    <plurals name="votes">
+        <item quantity="one">%d vote</item>
+        <item quantity="other">%d votes</item>
+    </plurals>
+
+    <string name="votes_string">%s votes</string>
+
+</resources>
