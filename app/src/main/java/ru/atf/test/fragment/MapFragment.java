@@ -7,8 +7,8 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -27,7 +27,10 @@ import ru.atf.test.R;
 import ru.atf.test.activity.PlaceDetailsActivity;
 import ru.atf.test.adapter.PlacesAdapter;
 import ru.atf.test.io.net.PlacesLoader;
-import ru.atf.test.models.PlaceModel;
+import ru.atf.test.model.PlaceModel;
+import ru.atf.test.utils.AnimationHelper;
+import ru.atf.test.utils.PlacesScrollListener;
+import ru.atf.test.widget.OverScrollListView;
 
 public class MapFragment extends Fragment {
 
@@ -35,10 +38,11 @@ public class MapFragment extends Fragment {
 
     GoogleMap map;
     MapView mapView;
-    ListView placesList;
+    OverScrollListView placesList;
     Button btnPlaces;
     ProgressDialog progressDialog;
     PlacesAdapter placesAdapter;
+    View listFooterView;
 
     HashMap<Marker, PlaceModel> markers = new HashMap<>();
 
@@ -47,7 +51,7 @@ public class MapFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
 
         initMap(view, savedInstanceState);
-        initPlacesList(view);
+        initPlacesList(view, inflater);
 
         progressDialog = new ProgressDialog(getActivity());
         progressDialog.setMessage(getString(R.string.loading));
@@ -109,33 +113,95 @@ public class MapFragment extends Fragment {
         map = mapView.getMap();
         map.getUiSettings().setMyLocationButtonEnabled(true);
         map.setMyLocationEnabled(true);
-        MapsInitializer.initialize(this.getActivity());
         map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
-                PlaceModel placeModel = markers.get(marker);
-                Intent placeDetailsIntent = new Intent(getActivity(), PlaceDetailsActivity.class);
-                placeDetailsIntent.putExtra(PlaceDetailsActivity.TITLE, placeModel.title);
-                placeDetailsIntent.putExtra(PlaceDetailsActivity.IMAGE_URL, placeModel.imageUrl);
-                startActivity(placeDetailsIntent);
+                openPlaceDetails(markers.get(marker));
             }
         });
+        MapsInitializer.initialize(this.getActivity());
     }
 
-    private void initPlacesList(View view) {
-        placesList = (ListView) view.findViewById(R.id.lv_places);
+    private void initPlacesList(View view, LayoutInflater layoutInflater) {
+        placesList = (OverScrollListView) view.findViewById(R.id.lv_places);
         btnPlaces = (Button) view.findViewById(R.id.btn_places_list);
 
+        View headerView = layoutInflater.inflate(R.layout.places_list_header_view, null);
+        headerView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hidePlacesList();
+            }
+        });
+        placesList.addHeaderView(headerView);
+
+        listFooterView = layoutInflater.inflate(R.layout.places_list_footer_view, null);
+        placesList.addFooterView(listFooterView);
+
         placesAdapter = new PlacesAdapter(getActivity(), R.layout.place_list_item);
+
         placesList.setAdapter(placesAdapter);
+
+        placesList.setOnScrollListener(new PlacesScrollListener(new PlacesScrollListener.OnLoadMoreListener() {
+            @Override
+            public void onLoadMore(int pageNumber, int totalItemsCount) {
+                loadNextPage(pageNumber);
+            }
+        }));
+
+        placesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                openPlaceDetails(placesAdapter.getItem(position - 1));
+            }
+        });
+
+        placesList.setOnOverScrollListener(new OverScrollListView.OnOverScrollListener() {
+            @Override
+            public void onOverScrollTop() {
+                hidePlacesList();
+            }
+        });
 
         btnPlaces.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                placesList.setVisibility(View.VISIBLE);
-                btnPlaces.setVisibility(View.INVISIBLE);
+                showPlacesList();
             }
         });
+    }
+
+    private void loadNextPage(int pageNumber) {
+        if (PlacesLoader.getInstance().getPageCount() > pageNumber) {
+            PlacesLoader.getInstance().getPlacesAsync(pageNumber, new PlacesLoader.LoadListener() {
+                @Override
+                public void onSuccess(ArrayList<PlaceModel> placeModels) {
+                    placesAdapter.addItems(placeModels);
+                }
+
+                @Override
+                public void onFailed(String errorString) {
+                    Toast.makeText(getActivity(), errorString, Toast.LENGTH_LONG).show();
+                }
+            });
+        } else {
+            placesList.removeFooterView(listFooterView);
+        }
+    }
+
+    private void openPlaceDetails(PlaceModel placeModel) {
+        Intent placeDetailsIntent = new Intent(getActivity(), PlaceDetailsActivity.class);
+        placeDetailsIntent.putExtra(PlaceDetailsActivity.TITLE, placeModel.title);
+        placeDetailsIntent.putExtra(PlaceDetailsActivity.IMAGE_URL, placeModel.imageUrl);
+        startActivity(placeDetailsIntent);
+    }
+
+    private void hidePlacesList() {
+        AnimationHelper.animateHideListView(placesList, btnPlaces);
+    }
+
+    private void showPlacesList() {
+        AnimationHelper.animateShowListView(placesList, btnPlaces);
     }
 
 }

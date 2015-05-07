@@ -11,5 +11,6 @@
     </plurals>
 
     <string name="votes_string">%s votes</string>
+    <string name="distance_string">%.2f mi *</string>
 
 </resources>

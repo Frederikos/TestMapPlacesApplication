@@ -9,7 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
-import ru.atf.test.models.PlaceModel;
+import ru.atf.test.model.PlaceModel;
 import ru.atf.test.utils.Utils;
 
 public class PlacesLoader {
@@ -49,7 +49,7 @@ public class PlacesLoader {
             @Override
             protected void onPostExecute(ArrayList<PlaceModel> placeModels) {
                 if (placeModels == null) {
-                    //TODO For now just show one stub error.
+                    //TODO For now just show stub error.
                     loadListener.onFailed("Error loading content");
                 } else {
                     loadListener.onSuccess(placeModels);

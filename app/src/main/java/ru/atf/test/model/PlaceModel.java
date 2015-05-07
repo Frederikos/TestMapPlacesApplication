@@ -1,4 +1,4 @@
-package ru.atf.test.models;
+package ru.atf.test.model;
 
 import android.util.Log;
 
@@ -29,24 +29,24 @@ public class PlaceModel {
     public final String title;
     public final String subText;
     public final String imageUrl;
-    public final RaitingModel raiting;
+    public final RatingModel rating;
     public final LocationModel location;
 
     private PlaceModel(JSONObject jsonObject) {
         title = jsonObject.optString("title");
         subText = jsonObject.optString("subtext");
         imageUrl = jsonObject.optString("image");
-        raiting = new RaitingModel(jsonObject.optJSONObject("rating"));
+        rating = new RatingModel(jsonObject.optJSONObject("rating"));
         location = new LocationModel(jsonObject.optJSONObject("location"));
     }
 
-    public class RaitingModel {
+    public class RatingModel {
         public final String count;
         public final String fsValue;
         public final String type;
         public final String text;
 
-        public RaitingModel(JSONObject jsonObject) {
+        public RatingModel(JSONObject jsonObject) {
             count = jsonObject.optString("count");
             fsValue = jsonObject.optString("fsValue");
             type = jsonObject.optString("type");

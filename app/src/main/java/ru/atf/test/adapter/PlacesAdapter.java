@@ -4,6 +4,8 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -13,10 +15,11 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import java.util.ArrayList;
 
 import ru.atf.test.R;
-import ru.atf.test.models.PlaceModel;
+import ru.atf.test.model.PlaceModel;
 
 public class PlacesAdapter extends ArrayAdapter<PlaceModel> {
 
+    int lastPosition = -1;
     LayoutInflater layoutInflater;
     Context context;
 
@@ -26,6 +29,7 @@ public class PlacesAdapter extends ArrayAdapter<PlaceModel> {
         layoutInflater = LayoutInflater.from(context);
     }
 
+    //not use addAll to support Android 2.3.+
     public void addItems(ArrayList<PlaceModel> items) {
         for (PlaceModel placeModel : items) {
             add(placeModel);
@@ -46,10 +50,14 @@ public class PlacesAdapter extends ArrayAdapter<PlaceModel> {
         }
 
         viewHolder.tvTitle.setText(placeModel.title);
-        viewHolder.tvFsValue.setText(placeModel.raiting.fsValue);
-        viewHolder.tvCountVotes.setText(String.format(context.getString(R.string.votes_string), placeModel.raiting.count));
-        viewHolder.tvDistance.setText(String.format("%.2f", placeModel.location.distance) + "mi * " + placeModel.location.location);
+        viewHolder.tvFsValue.setText(placeModel.rating.fsValue);
+        viewHolder.tvCountVotes.setText(String.format(context.getString(R.string.votes_string), placeModel.rating.count));
+        viewHolder.tvDistance.setText(String.format(context.getString(R.string.distance_string), placeModel.location.distance) + " " + placeModel.location.location);
         ImageLoader.getInstance().displayImage(placeModel.imageUrl, viewHolder.ivImage);
+
+        Animation animation = AnimationUtils.loadAnimation(getContext(), (position > lastPosition) ? R.anim.up_from_bottom : R.anim.down_from_top);
+        convertView.startAnimation(animation);
+        lastPosition = position;
 
         return convertView;
     }
